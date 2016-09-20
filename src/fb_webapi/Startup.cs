@@ -6,7 +6,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using fb_webapi.Entities;
+using Microsoft.EntityFrameworkCore;
+
+using OpenIddict;
 
 namespace fb_webapi
 {
@@ -27,7 +32,20 @@ namespace fb_webapi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add framework services.
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseNpgsql(Configuration["connectionString"]));
+
+            services.AddIdentity<User, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddOpenIddict<User, ApplicationDbContext>()
+                .EnableTokenEndpoint("/connect/token")
+                .AllowPasswordFlow()
+                .AllowRefreshTokenFlow()
+                .DisableHttpsRequirement()
+                .AddEphemeralSigningKey();
+
             services.AddMvc();
         }
 
@@ -36,6 +54,19 @@ namespace fb_webapi
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            app.UseCors(options => options
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowAnyOrigin()
+                .AllowCredentials()
+            );
+
+            app.UseIdentity();
+
+            app.UseOAuthValidation();
+
+            app.UseOpenIddict();
 
             app.UseMvc();
         }
