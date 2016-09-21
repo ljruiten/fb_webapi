@@ -17,11 +17,11 @@ namespace  fb_webapi.Controllers {
             this.dbContext = context;
         }
 
-        [Route("api/picture/full/{id}")]
-        public IActionResult GetFull(int id) {
+        [HttpGet]
+        [Route("api/meals/{mealId}/pictures/{pictureId}/full")]
+        public IActionResult GetFull(int mealId, int pictureId) {
             var image = dbContext.Pictures
-                .Where(p => p.Id == id)
-                .Include(p => p.Full)
+                .Where(p => p.Id == pictureId)
                 .FirstOrDefault()
                 .Full;
 
@@ -30,13 +30,11 @@ namespace  fb_webapi.Controllers {
             return new FileStreamResult(ms, "image/png");
         }
 
-        [Route("api/picture/small/{id}")]
-        public IActionResult GetSmall(int id) {
-            System.Console.WriteLine("Picture id is: {0}", id);
-
+        [HttpGet]
+        [Route("api/meals/{mealId}/pictures/{pictureId}/small")]
+        public IActionResult GetSmall(int mealId, int pictureId) {
             var image = dbContext.Pictures
-                .Where(p => p.Id == id)
-                .Include(p => p.Thumbnail)
+                .Where(p => p.Id == pictureId)
                 .FirstOrDefault()
                 .Thumbnail;
 
@@ -45,7 +43,8 @@ namespace  fb_webapi.Controllers {
             return new FileStreamResult(ms, "image/png");
         }
 
-        [Route("api/pictures/add/{mealId:int}")]
+        [HttpPost]
+        [Route("api/meals/{mealId}/pictures")]
         public async Task<IActionResult> AddPicture(int mealId) {
             var pictures = new List<Picture>();
 
@@ -92,6 +91,20 @@ namespace  fb_webapi.Controllers {
             }
 
             meal.Pictures.AddRange(pictures);
+            await dbContext.SaveChangesAsync();
+
+            return new OkResult();
+        }
+
+        [HttpDelete]
+        [Route("api/meals/{mealId}/pictures/{pictureId}")]
+        public async Task<IActionResult> DeletePicture(int mealId, int pictureId)
+        {
+            var picture = dbContext.Pictures
+                .Where(p => p.Id == pictureId)
+                .First();
+
+            dbContext.Pictures.Remove(picture);
             await dbContext.SaveChangesAsync();
 
             return new OkResult();

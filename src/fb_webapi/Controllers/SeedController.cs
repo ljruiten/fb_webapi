@@ -26,7 +26,7 @@ namespace fb_webapi {
                 .Include(m => m.Pictures)
                 .First();
 
-            meals.User = null;
+            //meals.User = null;
 
             return new JsonResult(meals);
         }

@@ -12,6 +12,7 @@ using fb_webapi.Entities;
 using Microsoft.EntityFrameworkCore;
 
 using OpenIddict;
+using System.Diagnostics;
 
 namespace fb_webapi
 {
@@ -23,6 +24,7 @@ namespace fb_webapi
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddUserSecrets()
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
         }
@@ -33,7 +35,7 @@ namespace fb_webapi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(Configuration["connectionString"]));
+                options.UseNpgsql(MakeConnectionString()));
 
             services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -69,6 +71,18 @@ namespace fb_webapi
             app.UseOpenIddict();
 
             app.UseMvc();
+        }
+
+        private string MakeConnectionString()
+        {
+            string a = Configuration["dbUsername"];
+
+            return String.Format(
+                "Host={0};Database={1};Username={2};Password={3};SSL Mode=Require;Trust Server Certificate=true;",
+                Configuration["dbHost"],
+                Configuration["dbName"],
+                Configuration["dbUser"],
+                Configuration["dbPassword"]);
         }
     }
 }
